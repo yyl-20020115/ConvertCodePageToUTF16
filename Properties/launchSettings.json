@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ConvertCodePageToUTF16": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Working\\VirtualNESPlus\\ GB2312 *.rc"
+    }
+  }
+}
