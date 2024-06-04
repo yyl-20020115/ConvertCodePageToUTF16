@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using OllamaAPI;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Text;
 
@@ -12,16 +13,56 @@ public class Program
         var name = Path.GetFileName(path);
         return Path.Combine(folder ?? ".", name + ext);
     }
-    public static int Main(string[] args)
+
+    public static bool HasNonAscii(string text)
+    {
+        return text.Any(c => c > 127);
+    }
+    public static async Task<string> ProcessLine(string line, string language)
+    {
+        var i = line.IndexOf("//");
+        if (i >= 0)
+        {
+            var comment = line[(i+2)..].Trim();
+            if (HasNonAscii(comment))
+            {
+                var result = await OllamaAPIProvider.CallOllama(
+                    $"Translate into {language}:{comment}", "llama2", "user");
+                
+                if (!string.IsNullOrEmpty(result)) {
+                    var parts = result.Split('\n');
+                    
+                    if (parts.Length > 1) result = string.Join(' ',parts);
+
+                    var last = result.LastIndexOf('"');
+                    var lastbefore = last>0 ? result.LastIndexOf('"', last - 1):0;
+                    var answer = "";
+                    if (lastbefore < last)
+                    {
+                        answer = result[(lastbefore+1)..last];
+                    }else if (last < 0)
+                    {
+                        answer = result.Trim();
+                    }
+                    line = line[..(i + 2)] + " #### " + answer;
+                }
+
+            }
+        }
+        return line;
+    }
+
+    public static async Task<int> Main(string[] args)
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        var language = "English";
         var path = ".";
-        var encoding_name = "GB2312";
+        var encoding_name = "Unicode";
         var filter = "*.*";
         switch (args.Length)
         {
             case 0:
-                Console.WriteLine("ConvertCodePageToUTF16 [path_of_file_or_folder] [codepage/encoding] [filter]");
+                Console.WriteLine("ConvertCodePageToUTF16 [path_of_file_or_folder] [codepage/encoding] [filter] [language]");
                 return -1;
             case 1:
                 path = args[0];
@@ -34,6 +75,12 @@ public class Program
                 path = args[0];
                 encoding_name = args[1];
                 filter = args[2];
+                break;
+            case 4:
+                path = args[0];
+                encoding_name = args[1];
+                filter = args[2];
+                language = args[3];
                 break;
         }
         var is_file = false;
@@ -69,7 +116,8 @@ public class Program
                 string? line = null;
                 while ((line = reader.ReadLine()) != null)
                 {
-                    writer.WriteLine(line);
+                    var result = await ProcessLine(line, language);
+                    writer.WriteLine(result);
                 }
             }
 
@@ -90,7 +138,8 @@ public class Program
                     string? line = null;
                     while ((line = reader.ReadLine()) != null)
                     {
-                        writer.WriteLine(line);
+
+                        writer.WriteLine(ProcessLine(line, language));
                     }
                 }
                 File.Delete(_path + ".bak");
