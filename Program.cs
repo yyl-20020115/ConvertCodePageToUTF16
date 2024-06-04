@@ -1,6 +1,4 @@
 ﻿using OllamaAPI;
-using System.ComponentModel.DataAnnotations;
-using System.Data;
 using System.Text;
 
 namespace ConvertCodePageToUTF16;
