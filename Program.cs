@@ -108,6 +108,7 @@ public class Program
         {
             var _path = path;
             var output_path = GetResultPathName(_path, ".txt");
+            Console.WriteLine($"Processing:{_path}...");
             {
                 using var reader = new StreamReader(_path, encoding, true);
                 using var writer = new StreamWriter(output_path, false, utf16le);
@@ -118,7 +119,7 @@ public class Program
                     writer.WriteLine(result);
                 }
             }
-
+            Console.WriteLine("done.");
             File.Delete(_path + ".bak");
 
             File.Move(_path, _path + ".bak");
@@ -127,8 +128,12 @@ public class Program
         else
         {
             var _paths = Directory.GetFiles(path, filter, SearchOption.AllDirectories);
+            int c = 0;
+            int total = _paths.Length;
             foreach (var _path in _paths)
             {
+                c++;
+                Console.WriteLine($"Processing({c}/{total}):{_path}...");
                 var output_path = GetResultPathName(_path, ".txt");
                 {
                     using var reader = new StreamReader(_path, encoding, true);
@@ -136,13 +141,14 @@ public class Program
                     string? line = null;
                     while ((line = reader.ReadLine()) != null)
                     {
-
-                        writer.WriteLine(ProcessLine(line, language));
+                        var result = await ProcessLine(line, language);
+                        writer.WriteLine(result);
                     }
                 }
                 File.Delete(_path + ".bak");
                 File.Move(_path, _path + ".bak");
                 File.Move(output_path, _path);
+                Console.WriteLine("done.");
 
             }
         }

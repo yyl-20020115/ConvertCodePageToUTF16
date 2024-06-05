@@ -2,7 +2,7 @@
   "profiles": {
     "ConvertCodePageToUTF16": {
       "commandName": "Project",
-      "commandLineArgs": "C:\\Working\\VirtualNESPlus\\WinMain.cpp Unicode"
+      "commandLineArgs": "C:\\Working\\VirtualNESPlus\\ Unicode *.h English"
     }
   }
 }
